@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+<title>Time & Date Calculator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background:#f3f6f4;
+  padding:12px;
+}
+:root{
+  --main-color:#62a88a;
+  --light-bg:#f0f7f4;
+  --border-color:#dde6e1;
+}
+.global-bar{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px 14px;
+  margin-bottom:16px;
+}
+.lang-switch, .format-switch{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.global-bar span{
+  font-size:13px;
+  color:#555;
+}
+.btn-switch{
+  padding:4px 8px;
+  font-size:13px;
+  border:1px solid var(--border-color);
+  border-radius:6px;
+  background:#fff;
+  cursor:pointer;
+}
+.btn-switch.active{
+  background:var(--main-color);color:#fff;border-color:var(--main-color);
+}
+.tab-box{
+  display:flex;
+  gap:4px;
+  margin-bottom:16px;
+}
+.tab-btn{
+  flex:1;
+  padding:10px 0;
+  border:none;
+  border-radius:10px;
+  font-size:13px;
+  background:#e8edea;
+  color:#555;
+  white-space:nowrap;
+}
+.tab-btn.active{
+  background:var(--main-color);color:#fff;
+}
+.main-card{
+  background:#fff;
+  border-radius:18px;
+  padding:20px 16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  max-width:480px;
+  margin:0 auto;
+}
+.title{
+  font-size:18px;
+  font-weight:600;
+  text-align:center;
+  margin-bottom:20px;
+}
+.item-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.label-text{font-size:14px;color:#333;white-space:nowrap;}
+input{
+  width:70px;
+  height:40px;
+  text-align:center;
+  border:1px solid var(--border-color);
+  border-radius:8px;
+  font-size:15px;
+}
+input[type="date"]{width:150px;}
+select{
+  height:40px;
+  padding:0 6px;
+  border:1px solid var(--border-color);
+  border-radius:8px;
+  font-size:14px;
+}
+
+/* 手机端优化：AM/PM 选择框变窄 */
+.ampm-select{
+  display:none;
+  width:56px; /* 更窄，适配手机 */
+}
+.ampm-select.show{display:block;}
+
+.btn{
+  width:100%;
+  height:44px;
+  border:none;
+  border-radius:12px;
+  background:var(--main-color);
+  color:#fff;
+  font-size:15px;
+  margin:0 auto;
+  display:block;
+}
+.btn-reset{
+  height:32px;
+  padding:0 8px;
+  border:none;
+  border-radius:6px;
+  background:#e8f1ee;
+  color:var(--main-color);
+  font-size:12px;
+}
+.btn-reset-all{
+  width:100%;
+  height:40px;
+  border:1px solid var(--main-color);
+  background:#fff;
+  color:var(--main-color);
+  font-size:14px;
+  border-radius:12px;
+  margin-top:12px;
+}
+.result{
+  margin-top:16px;
+  padding:12px;
+  background:var(--light-bg);
+  border-radius:8px;
+  text-align:center;
+  font-size:15px;
+}
+.note{
+  margin-top:8px;
+  font-size:11px;
+  color:#888;
+  text-align:center;
+  line-height:1.4;
+}
+.module{display:none;}
+.module.show{display:block;}
+</style>
+</head>
+<body>
+
+<div class="global-bar">
+  <div class="lang-switch">
+    <span id="langText">语言：</span>
+    <button class="btn-switch active" onclick="setLang('zh')">中文</button>
+    <button class="btn-switch" onclick="setLang('en')">English</button>
+  </div>
+  <div class="format-switch">
+    <span id="timeText">时间：</span>
+    <button class="btn-switch active" onclick="setTimeFmt('24h')">24h</button>
+    <button class="btn-switch" onclick="setTimeFmt('12h')">12h</button>
+  </div>
+  <div class="format-switch">
+    <span id="dateText">日期格式：</span>
+    <button class="btn-switch" onclick="setDateFmt('yyyy-MM-dd')">-</button>
+    <button class="btn-switch active" onclick="setDateFmt('yyyy/MM/dd')">/</button>
+    <button class="btn-switch" onclick="setDateFmt('yyyy.MM.dd')">.</button>
+  </div>
+</div>
+
+<div class="tab-box">
+  <button class="tab-btn active" id="tab1" onclick="go(1)">时间推算</button>
+  <button class="tab-btn" id="tab2" onclick="go(2)">时间差</button>
+  <button class="tab-btn" id="tab3" onclick="go(3)">日期推算</button>
+  <button class="tab-btn" id="tab4" onclick="go(4)">日期差</button>
+</div>
+
+<div class="main-card">
+  <div class="module show" id="mod1">
+    <div class="title" id="title1">时间推算</div>
+    <div class="item-row">
+      <span class="label-text" id="lab1">开始</span>
+      <input id="h1" placeholder="">
+      <span>:</span>
+      <input id="m1" placeholder="">
+      <select id="ampm1" class="ampm-select">
+        <option>AM</option><option>PM</option>
+      </select>
+      <button class="btn-reset" id="clr1">清空</button>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab2">运算</span>
+      <select id="opt1">
+        <option value="add" id="optAdd">加</option>
+        <option value="sub" id="optSub">减</option>
+      </select>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab3">时长</span>
+      <input id="dh" placeholder="">
+      <span>:</span>
+      <input id="dm" placeholder="">
+      <button class="btn-reset" id="clr2">清空</button>
+    </div>
+    <button class="btn" id="btn1" onclick="calcTime()">计算</button>
+    <div class="result" id="res1"></div>
+    <button class="btn-reset-all" id="rst1" onclick="reset1()">重置</button>
+    <div class="note" id="note1">结果 = 开始时间 ± 时长</div>
+  </div>
+
+  <div class="module" id="mod2">
+    <div class="title" id="title2">时间差</div>
+    <div class="item-row">
+      <span class="label-text" id="lab4">时间A</span>
+      <input id="ah" placeholder="">
+      <span>:</span>
+      <input id="am" placeholder="">
+      <select id="ampmA" class="ampm-select">
+        <option>AM</option><option>PM</option>
+      </select>
+      <button class="btn-reset" id="clr3">清空</button>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab5">时间B</span>
+      <input id="bh" placeholder="">
+      <span>:</span>
+      <input id="bm" placeholder="">
+      <select id="ampmB" class="ampm-select">
+        <option>AM</option><option>PM</option>
+      </select>
+      <button class="btn-reset" id="clr4">清空</button>
+    </div>
+    <button class="btn" id="btn2" onclick="calcDiff()">计算差值</button>
+    <div class="result" id="res2"></div>
+    <button class="btn-reset-all" id="rst2" onclick="reset2()">重置</button>
+    <div class="note" id="note2">时间差 = |A − B|，显示小时分钟与总分钟</div>
+  </div>
+
+  <div class="module" id="mod3">
+    <div class="title" id="title3">日期推算</div>
+    <div class="item-row">
+      <span class="label-text" id="lab6">起始</span>
+      <input type="date" id="base">
+      <button class="btn-reset" id="clr5">清空</button>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab7">加天数</span>
+      <input id="add" placeholder="">
+      <button class="btn-reset" id="clr6">清空</button>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab8">减天数</span>
+      <input id="sub" placeholder="">
+      <button class="btn-reset" id="clr7">清空</button>
+    </div>
+    <button class="btn" id="btn3" onclick="calcDate()">计算</button>
+    <div class="result" id="res3"></div>
+    <button class="btn-reset-all" id="rst3" onclick="reset3()">重置</button>
+    <div class="note" id="note3">目标日期 = 起始 + 加 − 减</div>
+  </div>
+
+  <div class="module" id="mod4">
+    <div class="title" id="title4">日期差</div>
+    <div class="item-row">
+      <span class="label-text" id="lab9">日期A</span>
+      <input type="date" id="da">
+      <button class="btn-reset" id="clr8">清空</button>
+    </div>
+    <div class="item-row">
+      <span class="label-text" id="lab10">日期B</span>
+      <input type="date" id="db">
+      <button class="btn-reset" id="clr9">清空</button>
+    </div>
+    <button class="btn" id="btn4" onclick="calcDateDiff()">计算差值</button>
+    <div class="result" id="res4"></div>
+    <button class="btn-reset-all" id="rst4" onclick="reset4()">重置</button>
+    <div class="note" id="note4">间隔天数 = |日期B − 日期A|</div>
+  </div>
+</div>
+
+<script>
+let lang = 'zh';
+let timeFmt = '24h';
+let dateFmt = 'yyyy/MM/dd';
+
+const langData = {
+  zh: {
+    langTitle:"语言：",timeTitle:"时间：",dateTitle:"日期格式：",
+    tab1:"时间推算",tab2:"时间差",tab3:"日期推算",tab4:"日期差",
+    title1:"时间推算",title2:"时间差",title3:"日期推算",title4:"日期差",
+    lab1:"开始",lab2:"运算",lab3:"时长",lab4:"时间A",lab5:"时间B",lab6:"起始",lab7:"加天数",lab8:"减天数",lab9:"日期A",lab10:"日期B",
+    optAdd:"加",optSub:"减",btn1:"计算",btn2:"计算差值",btn3:"计算",btn4:"计算差值",
+    rst:"重置",clr:"清空",
+    note1:"结果 = 开始时间 ± 时长",note2:"时间差 = |A − B|，显示小时分钟与总分钟",note3:"目标日期 = 起始 + 加 − 减",note4:"间隔天数 = |日期B − 日期A|",
+    r1:"结果时间：",r2:"相差：",r3:"总分钟：",r4:"目标日期：",r5:"相差天数：",
+    h:"时",m:"分",day:"天",days:"天数",
+    pH:"时",pM:"分",pDay:"天",
+    errDate:"请选择日期",errTwo:"请选择两个日期"
+  },
+  en: {
+    langTitle:"Language:",timeTitle:"Time Format:",dateTitle:"Date Format:",
+    tab1:"Time Calculation",tab2:"Time Difference",tab3:"Date Calculation",tab4:"Date Difference",
+    title1:"Time Calculation",title2:"Time Difference",title3:"Date Calculation",title4:"Date Difference",
+    lab1:"Start",lab2:"Operation",lab3:"Duration",lab4:"Time A",lab5:"Time B",lab6:"Base Date",lab7:"Add Days",lab8:"Subtract Days",lab9:"Date A",lab10:"Date B",
+    optAdd:"Add",optSub:"Subtract",btn1:"Calculate",btn2:"Calculate Difference",btn3:"Calculate",btn4:"Calculate Difference",
+    rst:"Reset",clr:"Clear",
+    note1:"Result = Start Time ± Duration",note2:"Time Difference = |A − B|, show hours minutes and total minutes",note3:"Target Date = Base Date + Add − Sub",note4:"Days = |Date B − Date A|",
+    r1:"Result Time:",r2:"Difference:",r3:"Total Minutes:",r4:"Target Date:",r5:"Days Difference:",
+    h:"h",m:"m",day:"d",days:"Days",
+    pH:"Hour",pM:"Min",pDay:"Days",
+    errDate:"Select date",errTwo:"Select two dates"
+  }
+};
+
+function go(n){
+  document.querySelectorAll('.module').forEach(x=>x.classList.remove('show'));
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('mod'+n).classList.add('show');
+  document.getElementById('tab'+n).classList.add('active');
+}
+
+function setLang(v){
+  lang=v;
+  const t=langData[lang];
+  document.querySelectorAll('.btn-switch').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  document.getElementById('langText').textContent = t.langTitle;
+  document.getElementById('timeText').textContent = t.timeTitle;
+  document.getElementById('dateText').textContent = t.dateTitle;
+
+  document.getElementById('tab1').textContent = t.tab1;
+  document.getElementById('tab2').textContent = t.tab2;
+  document.getElementById('tab3').textContent = t.tab3;
+  document.getElementById('tab4').textContent = t.tab4;
+
+  document.getElementById('title1').textContent = t.title1;
+  document.getElementById('title2').textContent = t.title2;
+  document.getElementById('title3').textContent = t.title3;
+  document.getElementById('title4').textContent = t.title4;
+
+  document.getElementById('lab1').textContent = t.lab1;
+  document.getElementById('lab2').textContent = t.lab2;
+  document.getElementById('lab3').textContent = t.lab3;
+  document.getElementById('lab4').textContent = t.lab4;
+  document.getElementById('lab5').textContent = t.lab5;
+  document.getElementById('lab6').textContent = t.lab6;
+  document.getElementById('lab7').textContent = t.lab7;
+  document.getElementById('lab8').textContent = t.lab8;
+  document.getElementById('lab9').textContent = t.lab9;
+  document.getElementById('lab10').textContent = t.lab10;
+
+  document.getElementById('optAdd').textContent = t.optAdd;
+  document.getElementById('optSub').textContent = t.optSub;
+
+  document.getElementById('btn1').textContent = t.btn1;
+  document.getElementById('btn2').textContent = t.btn2;
+  document.getElementById('btn3').textContent = t.btn3;
+  document.getElementById('btn4').textContent = t.btn4;
+
+  document.getElementById('rst1').textContent = t.rst;
+  document.getElementById('rst2').textContent = t.rst;
+  document.getElementById('rst3').textContent = t.rst;
+  document.getElementById('rst4').textContent = t.rst;
+
+  document.getElementById('clr1').textContent = t.clr;
+  document.getElementById('clr2').textContent = t.clr;
+  document.getElementById('clr3').textContent = t.clr;
+  document.getElementById('clr4').textContent = t.clr;
+  document.getElementById('clr5').textContent = t.clr;
+  document.getElementById('clr6').textContent = t.clr;
+  document.getElementById('clr7').textContent = t.clr;
+  document.getElementById('clr8').textContent = t.clr;
+  document.getElementById('clr9').textContent = t.clr;
+
+  document.getElementById('note1').textContent = t.note1;
+  document.getElementById('note2').textContent = t.note2;
+  document.getElementById('note3').textContent = t.note3;
+  document.getElementById('note4').textContent = t.note4;
+
+  // ———— 关键修复：占位符完全独立，中英文彻底分开 ————
+  document.getElementById('h1').placeholder = t.pH;
+  document.getElementById('m1').placeholder = t.pM;
+  document.getElementById('dh').placeholder = t.pH;
+  document.getElementById('dm').placeholder = t.pM;
+  document.getElementById('ah').placeholder = t.pH;
+  document.getElementById('am').placeholder = t.pM;
+  document.getElementById('bh').placeholder = t.pH;
+  document.getElementById('bm').placeholder = t.pM;
+  document.getElementById('add').placeholder = t.pDay;
+  document.getElementById('sub').placeholder = t.pDay;
+}
+
+function setTimeFmt(v){
+  timeFmt=v;
+  document.querySelectorAll('.format-switch .btn-switch').forEach(b=>{
+    if(!b.parentElement.classList.contains('lang-switch')) b.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  const show = v==='12h';
+  document.getElementById('ampm1').classList.toggle('show',show);
+  document.getElementById('ampmA').classList.toggle('show',show);
+  document.getElementById('ampmB').classList.toggle('show',show);
+}
+
+function setDateFmt(v){
+  dateFmt=v;
+  document.querySelectorAll('.format-switch .btn-switch').forEach(btn=>{
+    if(btn.parentElement.classList.contains('format-switch')&&!btn.parentElement.classList.contains('lang-switch')){
+      btn.classList.remove('active');
+    }
+  });
+  event.target.classList.add('active');
+}
+
+function to24(h,am){return am==='AM'?(h==12?0:h):(h==12?12:h+12);}
+function fmt(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dVal=String(d.getDate()).padStart(2,'0');
+  if(dateFmt==='yyyy-MM-dd')return `${y}-${m}-${dVal}`;
+  if(dateFmt==='yyyy.MM.dd')return `${y}.${m}.${dVal}`;
+  return `${y}/${m}/${dVal}`;
+}
+
+function clr1(){document.getElementById('h1').value='';document.getElementById('m1').value='';}
+function clr2(){document.getElementById('dh').value='';document.getElementById('dm').value='';}
+function clr3(){document.getElementById('ah').value='';document.getElementById('am').value='';}
+function clr4(){document.getElementById('bh').value='';document.getElementById('bm').value='';}
+function clr5(){document.getElementById('base').value='';}
+function clr6(){document.getElementById('add').value='';}
+function clr7(){document.getElementById('sub').value='';}
+function clr8(){document.getElementById('da').value='';}
+function clr9(){document.getElementById('db').value='';}
+
+function reset1(){clr1();clr2();document.getElementById('res1').textContent='';}
+function reset2(){clr3();clr4();document.getElementById('res2').textContent='';}
+function reset3(){clr5();clr6();clr7();document.getElementById('res3').textContent='';}
+function reset4(){clr8();clr9();document.getElementById('res4').textContent='';}
+
+function calcTime(){
+  const t=langData[lang];
+  let h=+document.getElementById('h1').value||0;
+  let m=+document.getElementById('m1').value||0;
+  if(timeFmt==='12h')h=to24(h,document.getElementById('ampm1').value);
+  const dh=+document.getElementById('dh').value||0;
+  const dm=+document.getElementById('dm').value||0;
+  let total=h*60+m;
+  document.getElementById('opt1').value==='add'?total+=dh*60+dm:total-=dh*60+dm;
+  total=(total%1440+1440)%1440;
+  const hh=Math.floor(total/60),mm=total%60;
+  document.getElementById('res1').textContent=t.r1+`${String(hh).padStart(2,0)}:${String(mm).padStart(2,0)}`;
+}
+
+function calcDiff(){
+  const t=langData[lang];
+  let aH=+document.getElementById('ah').value||0,aM=+document.getElementById('am').value||0;
+  let bH=+document.getElementById('bh').value||0,bM=+document.getElementById('bm').value||0;
+  if(timeFmt==='12h'){aH=to24(aH,document.getElementById('ampmA').value);bH=to24(bH,document.getElementById('ampmB').value);}
+  const d=Math.abs(aH*60+aM - (bH*60+bM));
+  const hh=Math.floor(d/60),mm=d%60;
+  document.getElementById('res2').textContent=`${t.r2} ${hh}${t.h} ${mm}${t.m} | ${t.r3} ${d}`;
+}
+
+function calcDate(){
+  const t=langData[lang];
+  const b=document.getElementById('base').value;
+  if(!b){document.getElementById('res3').textContent=t.errDate;return;}
+  const dt=new Date(b);
+  dt.setDate(dt.getDate() + (+document.getElementById('add').value||0) - (+document.getElementById('sub').value||0));
+  document.getElementById('res3').textContent=t.r4+fmt(dt);
+}
+
+function calcDateDiff(){
+  const t=langData[lang];
+  const a=document.getElementById('da').value,b=document.getElementById('db').value;
+  if(!a||!b){document.getElementById('res4').textContent=t.errTwo;return;}
+  const days=Math.floor(Math.abs(new Date(b)-new Date(a))/86400000);
+  document.getElementById('res4').textContent=t.r5+days+t.day;
+}
+
+setLang('zh');
+</script>
+</body>
+</html>
