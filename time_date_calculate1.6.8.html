@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title data-i18n="title">日期时间计算器</title>
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --primary-dark: #45B7D1;
+            --light: #F7F9FC;
+            --white: #FFFFFF;
+            --text: #2D3436;
+            --text-light: #636E72;
+            --border: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 6px;
+            --time-input-w: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI','Microsoft YaHei',sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F0F9FF 0%, #F7F9FC 100%);
+            padding: 15px 10px;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .title {
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px;
+            border: none;
+            background: var(--light);
+            color: var(--text-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            flex: 1;
+            min-width: 90px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .config {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: var(--light);
+            border-radius: var(--radius-sm);
+        }
+
+        .config select {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            flex: 1;
+            min-width: 100px;
+            font-size: 13px;
+        }
+
+        .module {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .module.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {opacity:0;transform:translateY(5px);}
+            to {opacity:1;transform:translateY(0);}
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .form-group label {
+            min-width: 75px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        .form-group select:not(.ampm) {
+            width: var(--time-input-w);
+            min-width: var(--time-input-w);
+            padding: 10px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            text-align: center;
+            flex: none;
+        }
+
+        input[type="date"] {
+            flex: 1;
+            min-width: 160px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(78,205,196,0.15);
+        }
+
+        .time-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .clear-btn {
+            border: none;
+            background: var(--light);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 16px;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            flex: none;
+        }
+
+        .clear-btn:hover {
+            background: #FFE5E5;
+            color: #FF6B6B;
+        }
+
+        .ampm {
+            width: 70px;
+            padding: 10px 5px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.2s;
+            flex: 1;
+            min-width: 100px;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #B2BECD;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 14px;
+            background: linear-gradient(90deg, #F0F9FF 0%, #E6F7F6 100%);
+            border-radius: var(--radius-sm);
+            color: var(--primary-dark);
+            font-weight: 500;
+            line-height: 1.5;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* 计算说明注释样式 */
+        .note {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+
+        hr {
+            border: none;
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* 小米手机专属适配 */
+        @media (max-width: 480px) {
+            body {padding:8px 5px;}
+            .container {padding:15px 12px;}
+            .title {font-size:20px;}
+            .btn {width:100%;min-width:auto;}
+            .form-group label {min-width:65px;font-size:13px;}
+            .tab-btn {font-size:12px;padding:8px 6px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title" data-i18n="title">日期时间计算器</h1>
+        
+        <div class="config">
+            <select id="lang" onchange="setLang(this.value)">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+            </select>
+            <select id="timeFmt" onchange="setTimeFmt(this.value)" data-i18n-select="timeFmtOptions">
+                <option value="24h" data-i18n="timeFmt24">24小时制</option>
+                <option value="12h" data-i18n="timeFmt12">12小时制</option>
+            </select>
+            <select id="dateFmt" onchange="setDateFmt(this.value)">
+                <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+                <option value="yyyy/MM/dd">yyyy/MM/dd</option>
+                <option value="yyyy.MM.dd">yyyy.MM.dd</option>
+            </select>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="go(1)" data-i18n="tabTimeCalc">时间推算</button>
+            <button class="tab-btn" onclick="go(2)" data-i18n="tabTimeDiff">时间差</button>
+            <button class="tab-btn" onclick="go(3)" data-i18n="tabDateCalc">日期推算</button>
+            <button class="tab-btn" onclick="go(4)" data-i18n="tabDateDiff">日期差</button>
+            <button class="tab-btn" onclick="go(5)" data-i18n="tabWorkDay">工作日计算</button>
+        </div>
+
+        <!-- 1. 时间推算 -->
+        <div class="module active" id="mod1">
+            <div class="form-group">
+                <label data-i18n="labelStartTime">起始时间</label>
+                <div class="input-group">
+                    <input type="date" id="date1">
+                    <div class="time-group">
+                        <input type="number" id="h1" placeholder data-i18n-placeholder="phHour">
+                        <span>:</span>
+                        <input type="number" id="m1" placeholder data-i18n-placeholder="phMin">
+                    </div>
+                    <select id="ampm1" class="ampm">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                    <button class="clear-btn" onclick="clearTimeGroup('date1','h1','m1','ampm1')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelCalcType">计算方式</label>
+                <select id="opt1">
+                    <option value="add" data-i18n="optAdd">加</option>
+                    <option value="sub" data-i18n="optSub">减</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelDuration">时长</label>
+                <div class="input-group">
+                    <input type="number" id="dh" placeholder data-i18n-placeholder="phHour">
+                    <button class="clear-btn" onclick="clearInput('dh')">×</button>
+                </div>
+                <span>:</span>
+                <div class="input-group">
+                    <input type="number" id="dm" placeholder data-i18n-placeholder="phMin">
+                    <button class="clear-btn" onclick="clearInput('dm')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcTime()" data-i18n="btnCalc">计算</button>
+            <button class="btn btn-secondary" onclick="resetTime()" data-i18n="btnReset">重置</button>
+            <div id="res1" class="result"></div>
+            <!-- 计算说明 -->
+            <div class="note" data-i18n="note1"></div>
+        </div>
+
+        <!-- 2. 时间差 -->
+        <div class="module" id="mod2">
+            <div class="form-group">
+                <label data-i18n="labelTime1">时间1</label>
+                <div class="input-group">
+                    <input type="date" id="date2_1">
+                    <div class="time-group">
+                        <input type="number" id="h2_1" placeholder data-i18n-placeholder="phHour">
+                        <span>:</span>
+                        <input type="number" id="m2_1" placeholder data-i18n-placeholder="phMin">
+                    </div>
+                    <select id="ampm2_1" class="ampm">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                    <button class="clear-btn" onclick="clearTimeGroup('date2_1','h2_1','m2_1','ampm2_1')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelTime2">时间2</label>
+                <div class="input-group">
+                    <input type="date" id="date2_2">
+                    <div class="time-group">
+                        <input type="number" id="h2_2" placeholder data-i18n-placeholder="phHour">
+                        <span>:</span>
+                        <input type="number" id="m2_2" placeholder data-i18n-placeholder="phMin">
+                    </div>
+                    <select id="ampm2_2" class="ampm">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                    <button class="clear-btn" onclick="clearTimeGroup('date2_2','h2_2','m2_2','ampm2_2')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcDiff()" data-i18n="btnCalc">计算</button>
+            <button class="btn btn-secondary" onclick="resetDiff()" data-i18n="btnReset">重置</button>
+            <div id="res2" class="result"></div>
+            <!-- 计算说明 -->
+            <div class="note" data-i18n="note2"></div>
+        </div>
+
+        <!-- 3. 日期推算 -->
+        <div class="module" id="mod3">
+            <div class="form-group">
+                <label data-i18n="labelStartDate">起始日期</label>
+                <div class="input-group">
+                    <input type="date" id="date3">
+                    <button class="clear-btn" onclick="clearInput('date3')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelCalcType">计算方式</label>
+                <select id="opt3">
+                    <option value="add" data-i18n="optAdd">加</option>
+                    <option value="sub" data-i18n="optSub">减</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelDays">天数</label>
+                <div class="input-group">
+                    <input type="number" id="days3" min="0" value="0">
+                    <button class="clear-btn" onclick="clearInput('days3')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcDate()" data-i18n="btnCalc">计算</button>
+            <button class="btn btn-secondary" onclick="resetDate()" data-i18n="btnReset">重置</button>
+            <div id="res3" class="result"></div>
+            <!-- 计算说明 -->
+            <div class="note" data-i18n="note3"></div>
+        </div>
+
+        <!-- 4. 日期差 -->
+        <div class="module" id="mod4">
+            <div class="form-group">
+                <!-- 日期1 双语标签 -->
+                <label data-i18n="labelDate1">日期1</label>
+                <div class="input-group">
+                    <input type="date" id="date4_1">
+                    <button class="clear-btn" onclick="clearInput('date4_1')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <!-- 日期2 双语标签 -->
+                <label data-i18n="labelDate2">日期2</label>
+                <div class="input-group">
+                    <input type="date" id="date4_2">
+                    <button class="clear-btn" onclick="clearInput('date4_2')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcDateDiff()" data-i18n="btnCalc">计算</button>
+            <button class="btn btn-secondary" onclick="resetDateDiff()" data-i18n="btnReset">重置</button>
+            <div id="res4" class="result"></div>
+            <!-- 计算说明 -->
+            <div class="note" data-i18n="note4"></div>
+        </div>
+
+        <!-- 5. 工作日计算 -->
+        <div class="module" id="mod5">
+            <div class="form-group">
+                <label data-i18n="labelStartDate">开始日期</label>
+                <div class="input-group">
+                    <input type="date" id="date5_1">
+                    <button class="clear-btn" onclick="clearInput('date5_1')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelEndDate">结束日期</label>
+                <div class="input-group">
+                    <input type="date" id="date5_2">
+                    <button class="clear-btn" onclick="clearInput('date5_2')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcWorkDays()" data-i18n="btnCalcWorkDays">计算工作日</button>
+            <button class="btn btn-secondary" onclick="resetWorkDaysCalc()" data-i18n="btnReset">重置</button>
+            <div id="res5" class="result"></div>
+
+            <hr>
+            
+            <div class="form-group">
+                <label data-i18n="labelBaseDate">基准日期</label>
+                <div class="input-group">
+                    <input type="date" id="date5_3">
+                    <button class="clear-btn" onclick="clearInput('date5_3')">×</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelCalcType">计算方式</label>
+                <select id="opt5">
+                    <option value="add" data-i18n="optAdd">加</option>
+                    <option value="sub" data-i18n="optSub">减</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="labelWorkDays">工作日数</label>
+                <div class="input-group">
+                    <input type="number" id="days5" min="1" value="1">
+                    <button class="clear-btn" onclick="clearInput('days5')">×</button>
+                </div>
+            </div>
+            <button class="btn" onclick="calcWorkDate()" data-i18n="btnCalcDate">推算日期</button>
+            <button class="btn btn-secondary" onclick="resetWorkDateCalc()" data-i18n="btnReset">重置</button>
+            <div id="res5_2" class="result"></div>
+            <!-- 计算说明 -->
+            <div class="note" data-i18n="note5"></div>
+        </div>
+    </div>
+
+<script>
+    // 完整双语语言包（新增计算说明）
+    const langData = {
+        zh: {
+            title: "日期时间计算器",
+            tabTimeCalc: "时间推算",
+            tabTimeDiff: "时间差",
+            tabDateCalc: "日期推算",
+            tabDateDiff: "日期差",
+            tabWorkDay: "工作日计算",
+            timeFmt24: "24小时制",
+            timeFmt12: "12小时制",
+            labelStartTime: "起始时间",
+            labelTime1: "时间1",
+            labelTime2: "时间2",
+            labelStartDate: "起始日期",
+            labelEndDate: "结束日期",
+            labelBaseDate: "基准日期",
+            labelCalcType: "计算方式",
+            labelDuration: "时长",
+            labelDays: "天数",
+            labelWorkDays: "工作日数",
+            labelDate1: "日期1",
+            labelDate2: "日期2",
+            optAdd: "加",
+            optSub: "减",
+            phHour: "时",
+            phMin: "分",
+            btnCalc: "计算",
+            btnReset: "重置",
+            btnCalcWorkDays: "计算工作日",
+            btnCalcDate: "推算日期",
+            r1: "结果时间：",
+            r2: "时间差：",
+            r3: "结果日期：",
+            r4: "日期差：",
+            r5: "工作日数：",
+            r6: "推算结果：",
+            note1: "计算方式：输入起始时间，选择加/减，填写时长，计算出目标时间",
+            note2: "计算方式：输入两个时间，自动计算间隔天数、小时、分钟，及总时长",
+            note3: "计算方式：输入起始日期，选择加/减天数，计算出目标日期",
+            note4: "计算方式：输入两个日期，自动计算相隔的总天数",
+            note5: "计算方式：1. 输入起止日期计算工作日数；2. 输入基准日期推算N个工作日后的日期"
+        },
+        en: {
+            title: "Date & Time Calculator",
+            tabTimeCalc: "Time Calc",
+            tabTimeDiff: "Time Diff",
+            tabDateCalc: "Date Calc",
+            tabDateDiff: "Date Diff",
+            tabWorkDay: "Work Days",
+            timeFmt24: "24h",
+            timeFmt12: "12h",
+            labelStartTime: "Start Time",
+            labelTime1: "Time 1",
+            labelTime2: "Time 2",
+            labelStartDate: "Start Date",
+            labelEndDate: "End Date",
+            labelBaseDate: "Base Date",
+            labelCalcType: "Mode",
+            labelDuration: "Duration",
+            labelDays: "Days",
+            labelWorkDays: "Work Days",
+            labelDate1: "Date 1",
+            labelDate2: "Date 2",
+            optAdd: "Add",
+            optSub: "Sub",
+            phHour: "H",
+            phMin: "M",
+            btnCalc: "Calculate",
+            btnReset: "Reset",
+            btnCalcWorkDays: "Calc Work Days",
+            btnCalcDate: "Calc Date",
+            r1: "Result: ",
+            r2: "Diff: ",
+            r3: "Result Date: ",
+            r4: "Date Diff: ",
+            r5: "Work Days: ",
+            r6: "Result: ",
+            note1: "How to calculate: Enter start time, select add/sub, input duration to get target time",
+            note2: "How to calculate: Enter two times, auto calculate days/hours/minutes & total duration",
+            note3: "How to calculate: Enter start date, select add/sub days to get target date",
+            note4: "How to calculate: Enter two dates, auto calculate total days between them",
+            note5: "How to calculate: 1. Calculate work days between two dates; 2. Calculate date after N work days"
+        }
+    };
+
+    let lang = 'zh';
+    let timeFmt = '24h';
+    let dateFmt = 'yyyy-MM-dd';
+    const holidays = [];
+    const compensatoryWorkdays = [];
+
+    window.onload = function() {
+        initDateTime();
+        setTimeFmt(timeFmt);
+        renderLang();
+    }
+
+    function go(n) {
+        document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mod'+n).classList.add('active');
+        document.querySelector('.tab-btn:nth-child('+n+')').classList.add('active');
+    }
+
+    function renderLang() {
+        const texts = langData[lang];
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = texts[el.dataset.i18n];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = texts[el.dataset.i18nPlaceholder];
+        });
+        document.title = texts.title;
+    }
+
+    function setLang(v) {
+        lang = v;
+        renderLang();
+    }
+
+    function setTimeFmt(v) {
+        timeFmt = v;
+        const show = v === '12h';
+        document.getElementById('ampm1').style.display = show ? 'inline-block' : 'none';
+        document.getElementById('ampm2_1').style.display = show ? 'inline-block' : 'none';
+        document.getElementById('ampm2_2').style.display = show ? 'inline-block' : 'none';
+    }
+
+    function setDateFmt(v) {dateFmt = v;}
+
+    function formatDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth()+1).padStart(2,'0');
+        const d = String(date.getDate()).padStart(2,'0');
+        return dateFmt.replace('yyyy',y).replace('MM',m).replace('dd',d);
+    }
+
+    function to24(h, ampm) {
+        if(ampm === 'AM') return h === 12 ? 0 : h;
+        return h === 12 ? 12 : h + 12;
+    }
+
+    function formatDoubleTime(date) {
+        const h = date.getHours(), m = date.getMinutes();
+        const h24 = String(h).padStart(2,'0');
+        const mm = String(m).padStart(2,'0');
+        const time24 = `${h24}:${mm}`;
+        let h12 = h % 12;
+        if (h12 === 0) h12 = 0;
+        const period = h >= 12 ? 'pm' : 'am';
+        const time12 = `${h12}:${mm}${period}`;
+        return { time24, time12 };
+    }
+
+    function initDateTime() {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        let h = now.getHours(), m = now.getMinutes();
+        
+        document.getElementById('date1').value = dateStr;
+        document.getElementById('h1').value = timeFmt==='12h' ? (h%12||12) : h;
+        document.getElementById('m1').value = m;
+        document.getElementById('ampm1').value = h>=12 ? 'PM' : 'AM';
+
+        document.getElementById('date2_1').value = dateStr;
+        document.getElementById('h2_1').value = timeFmt==='12h' ? (h%12||12) : h;
+        document.getElementById('m2_1').value = m;
+        document.getElementById('ampm2_1').value = h>=12 ? 'PM' : 'AM';
+        document.getElementById('date2_2').value = dateStr;
+        document.getElementById('h2_2').value = timeFmt==='12h' ? (h%12||12) : h;
+        document.getElementById('m2_2').value = m;
+        document.getElementById('ampm2_2').value = h>=12 ? 'PM' : 'AM';
+
+        document.getElementById('date3').value = dateStr;
+        document.getElementById('date4_1').value = dateStr;
+        document.getElementById('date4_2').value = dateStr;
+        document.getElementById('date5_1').value = dateStr;
+        document.getElementById('date5_2').value = dateStr;
+        document.getElementById('date5_3').value = dateStr;
+    }
+
+    function clearInput(id) {document.getElementById(id).value = '';}
+    function clearTimeGroup(dateId, hId, mId, ampmId) {
+        document.getElementById(dateId).value = '';
+        document.getElementById(hId).value = '';
+        document.getElementById(mId).value = '';
+        if(ampmId) document.getElementById(ampmId).value = 'AM';
+    }
+
+    function calcTime() {
+        const t = langData[lang];
+        const date = new Date(document.getElementById('date1').value);
+        let h = +document.getElementById('h1').value || 0;
+        let m = +document.getElementById('m1').value || 0;
+        
+        if(timeFmt === '12h') h = to24(h, document.getElementById('ampm1').value);
+        date.setHours(h, m, 0);
+        
+        const dh = +document.getElementById('dh').value || 0;
+        const dm = +document.getElementById('dm').value || 0;
+        const ms = (dh*60 + dm) * 60000;
+        
+        const resDate = new Date(document.getElementById('opt1').value==='add' ? date.getTime()+ms : date.getTime()-ms);
+        const dStr = formatDate(resDate);
+        const { time24, time12 } = formatDoubleTime(resDate);
+        
+        document.getElementById('res1').textContent = `${t.r1}${dStr} ${time24} | ${time12}`;
+    }
+
+    function calcDiff() {
+        const t = langData[lang];
+        const d1 = new Date(document.getElementById('date2_1').value);
+        let h1 = +document.getElementById('h2_1').value||0;
+        let m1 = +document.getElementById('m2_1').value||0;
+        if(timeFmt==='12h') h1 = to24(h1, document.getElementById('ampm2_1').value);
+        d1.setHours(h1,m1,0);
+
+        const d2 = new Date(document.getElementById('date2_2').value);
+        let h2 = +document.getElementById('h2_2').value||0;
+        let m2 = +document.getElementById('m2_2').value||0;
+        if(timeFmt==='12h') h2 = to24(h2, document.getElementById('ampm2_2').value);
+        d2.setHours(h2,m2,0);
+
+        let diff = Math.abs(d2 - d1);
+        const totalHours = (diff / 3600000).toFixed(2);
+        const totalMinutes = Math.floor(diff / 60000);
+        const days = Math.floor(diff / 86400000);
+        diff %= 86400000;
+        const hours = Math.floor(diff / 3600000);
+        diff %= 3600000;
+        const mins = Math.floor(diff / 60000);
+
+        document.getElementById('res2').textContent = `${t.r2}${days}d ${hours}h ${mins}m | Total: ${totalHours}h / ${totalMinutes}min`;
+    }
+
+    // 重置函数
+    function resetTime(){initDateTime(); document.getElementById('res1').textContent='';}
+    function resetDiff(){initDateTime(); document.getElementById('res2').textContent='';}
+    function resetDate(){document.getElementById('date3').value=new Date().toISOString().split('T')[0]; document.getElementById('days3').value=0; document.getElementById('res3').textContent='';}
+    function resetDateDiff(){const d=new Date().toISOString().split('T')[0]; document.getElementById('date4_1').value=d; document.getElementById('date4_2').value=d; document.getElementById('res4').textContent='';}
+    function resetWorkDaysCalc(){const d=new Date().toISOString().split('T')[0]; document.getElementById('date5_1').value=d; document.getElementById('date5_2').value=d; document.getElementById('res5').textContent='';}
+    function resetWorkDateCalc(){const d=new Date().toISOString().split('T')[0]; document.getElementById('date5_3').value=d; document.getElementById('days5').value=1; document.getElementById('opt5').value='add'; document.getElementById('res5_2').textContent='';}
+
+    // 日期/工作日计算
+    function calcDate(){
+        const d=new Date(document.getElementById('date3').value);
+        const days=+document.getElementById('days3').value||0;
+        document.getElementById('opt3').value==='add'?d.setDate(d.getDate()+days):d.setDate(d.getDate()-days);
+        document.getElementById('res3').textContent=`${langData[lang].r3}${formatDate(d)}`;
+    }
+    function calcDateDiff(){
+        const d1=new Date(document.getElementById('date4_1').value);
+        const d2=new Date(document.getElementById('date4_2').value);
+        const diff=Math.abs(Math.floor((d2-d1)/86400000));
+        document.getElementById('res4').textContent=`${langData[lang].r4}${diff} days`;
+    }
+    function isWorkDay(date){
+        const day=date.getDay();
+        const str=date.toISOString().split('T')[0];
+        if(compensatoryWorkdays.includes(str))return true;
+        if(holidays.includes(str)||day===0||day===6)return false;
+        return true;
+    }
+    function calcWorkDays(){
+        const d1=new Date(document.getElementById('date5_1').value);
+        const d2=new Date(document.getElementById('date5_2').value);
+        let count=0;
+        for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1)){
+            if(isWorkDay(d))count++;
+        }
+        document.getElementById('res5').textContent=`${langData[lang].r5}${count} days`;
+    }
+    function calcWorkDate(){
+        const d=new Date(document.getElementById('date5_3').value);
+        const days=+document.getElementById('days5').value||1;
+        const opt=document.getElementById('opt5').value;
+        let count=0;
+        if(opt === 'add'){
+            while(count<days){d.setDate(d.getDate()+1);if(isWorkDay(d))count++;}
+        }else{
+            while(count<days){d.setDate(d.getDate()-1);if(isWorkDay(d))count++;}
+        }
+        document.getElementById('res5_2').textContent=`${langData[lang].r6}${formatDate(d)}`;
+    }
+</script>
+</body>
+</html>
